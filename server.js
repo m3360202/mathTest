@@ -331,11 +331,24 @@ app.post('/search', async (req, res) => {
  */
 app.get('/documents', async (req, res) => {
     try {
-        // 这里可以实现获取所有文档的逻辑
-        // ChromaDB的API可能需要根据实际版本调整
+        const documents = [];
+        
+        // 从内存存储中获取所有文档
+        for (const [id, doc] of documentStore.documents) {
+            documents.push({
+                id: id,
+                filename: doc.metadata.filename,
+                uploadedAt: doc.metadata.timestamp,
+                contentLength: doc.content.length,
+                contentPreview: doc.content.substring(0, 100) + (doc.content.length > 100 ? '...' : ''),
+                metadata: doc.metadata
+            });
+        }
+
         res.json({
             success: true,
-            message: 'Document list endpoint - implementation depends on ChromaDB version',
+            totalDocuments: documents.length,
+            documents: documents,
             timestamp: new Date().toISOString()
         });
     } catch (error) {
@@ -343,6 +356,88 @@ app.get('/documents', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error fetching documents',
+            details: error.message
+        });
+    }
+});
+
+/**
+ * 根据ID获取特定文档
+ */
+app.get('/documents/:id', async (req, res) => {
+    try {
+        const documentId = req.params.id;
+        
+        if (documentStore.documents.has(documentId)) {
+            const doc = documentStore.documents.get(documentId);
+            res.json({
+                success: true,
+                document: {
+                    id: documentId,
+                    content: doc.content,
+                    metadata: doc.metadata
+                }
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: 'Document not found',
+                id: documentId
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching document:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error fetching document',
+            details: error.message
+        });
+    }
+});
+
+/**
+ * 获取数据库统计信息
+ */
+app.get('/database/stats', async (req, res) => {
+    try {
+        const stats = {
+            totalDocuments: documentStore.documents.size,
+            totalStorage: 0,
+            averageContentLength: 0,
+            fileTypes: {},
+            uploadDates: []
+        };
+
+        let totalContentLength = 0;
+        
+        for (const [id, doc] of documentStore.documents) {
+            totalContentLength += doc.content.length;
+            
+            // 统计文件类型
+            const filename = doc.metadata.filename || 'unknown';
+            const ext = filename.split('.').pop() || 'unknown';
+            stats.fileTypes[ext] = (stats.fileTypes[ext] || 0) + 1;
+            
+            // 收集上传日期
+            if (doc.metadata.timestamp) {
+                stats.uploadDates.push(doc.metadata.timestamp);
+            }
+        }
+
+        stats.averageContentLength = stats.totalDocuments > 0 ? 
+            Math.round(totalContentLength / stats.totalDocuments) : 0;
+        stats.totalStorage = totalContentLength;
+
+        res.json({
+            success: true,
+            statistics: stats,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fetching database stats:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error fetching database statistics',
             details: error.message
         });
     }
