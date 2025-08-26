@@ -1,0 +1,75 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js
+
+PATH: 
+  H:\Ruby32-x64\bin;G:\Ruby33-x64\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\windows\system32;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\Program Files (x86)\Yozosoft\Yozo_Office\Lib\xuggler\bin;C:\Program Files (x86)\Yarn\bin\;C:\ProgramData\chocolatey\bin;C:\Users\Administrator\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Users\Administrator\AppData\Roaming\npm;C:\Program Files\nodejs\;e:\微信web开发者工具\dll;C:\Program Files\Git\cmd;D:\微信web开发者工具\dll;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files\dotnet\;C:\Program Files (x86)\gnupg\bin;C:\Program Files\PostgreSQL\16\bin;C:\Program Files\MongoDB\mongosh-2.2.5-win32-x64\bin;F:\ffmpeg-2025-05-29-git-75960ac270-full_build\bin;;C:\Program Files\Docker\Docker\resources\bin;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Users\Administrator\AppData\Local\Yarn\bin;C:\Users\Administrator\AppData\Local\.meteor;C:\Users\Administrator\AppData\Local\.meteor\;C:\Users\Administrator\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Users\Administrator\AppData\Local\nvs\;E:\Microsoft VS Code\bin;E:\cursor\resources\app\bin
+
+Yarn version: 
+  1.23.0-20200615.1913
+
+Node version: 
+  20.0.0
+
+Platform: 
+  win32 x64
+
+Trace: 
+  Error: https://registry.npmjs.org/@langchain%2fchroma: Not found
+      at params.callback [as _callback] (C:\Program Files (x86)\Yarn\lib\cli.js:66097:18)
+      at self.callback (C:\Program Files (x86)\Yarn\lib\cli.js:140749:22)
+      at Request.emit (node:events:511:28)
+      at Request.<anonymous> (C:\Program Files (x86)\Yarn\lib\cli.js:141721:10)
+      at Request.emit (node:events:511:28)
+      at IncomingMessage.<anonymous> (C:\Program Files (x86)\Yarn\lib\cli.js:141643:12)
+      at Object.onceWrapper (node:events:625:28)
+      at IncomingMessage.emit (node:events:523:35)
+      at endReadableNT (node:internal/streams/readable:1367:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+
+npm manifest: 
+  {
+    "name": "math-document-processor",
+    "version": "1.0.0",
+    "description": "数学文档解析和向量存储系统 - 主API服务",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js",
+      "dev": "nodemon server.js",
+      "test": "jest"
+    },
+    "dependencies": {
+      "express": "^4.18.2",
+      "axios": "^1.6.0",
+      "multer": "^1.4.5-lts.1",
+      "cors": "^2.8.5",
+      "dotenv": "^16.3.1",
+      "form-data": "^4.0.0",
+      "fs-extra": "^11.1.1",
+      "@langchain/community": "^0.0.5",
+      "@langchain/chroma": "^0.0.3",
+      "chromadb": "^1.7.3",
+      "uuid": "^9.0.1"
+    },
+    "devDependencies": {
+      "nodemon": "^3.0.1",
+      "jest": "^29.7.0"
+    },
+    "engines": {
+      "node": ">=16.0.0"
+    },
+    "keywords": [
+      "math",
+      "document-processing",
+      "vector-database",
+      "latex",
+      "docx"
+    ],
+    "author": "Math Document Processor Team",
+    "license": "MIT"
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

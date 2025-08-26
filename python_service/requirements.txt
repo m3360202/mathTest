@@ -1,0 +1,24 @@
+# FastAPI和服务器
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Word文档处理
+python-docx==1.1.0
+docx2txt==0.8
+pypandoc==1.13
+lxml==4.9.3
+
+# 数学公式处理
+sympy==1.12
+latex2mathml==3.76.0
+
+# 基础工具
+python-dotenv==1.0.0
+requests==2.31.0
+aiofiles==23.2.0
+pydantic==2.5.0
+typing-extensions==4.8.0
+
+# 日志和调试
+loguru==0.7.2 
