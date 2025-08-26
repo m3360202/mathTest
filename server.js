@@ -82,16 +82,72 @@ class DocumentStore {
             const queryFingerprint = this.generateFingerprint(query);
             const results = [];
             
-            // 简单的文本匹配搜索
+            console.log(`🔍 搜索查询: "${query}"`);
+            console.log(`📊 数据库中有 ${this.documents.size} 个文档`);
+            
+            // 1. 基于指纹的相似度搜索
             for (const [id, doc] of this.documents) {
                 const similarity = this.calculateSimilarity(queryFingerprint, doc.metadata.fingerprint);
-                if (similarity > 0.1) { // 相似度阈值
+                if (similarity > 0.05) { // 降低阈值
                     results.push({
                         id: id,
                         document: doc.content,
                         metadata: doc.metadata,
-                        similarity: similarity
+                        similarity: similarity,
+                        matchType: 'fingerprint'
                     });
+                }
+            }
+            
+            // 2. 如果指纹搜索结果不够，使用直接文本搜索
+            if (results.length < limit) {
+                const queryLower = query.toLowerCase();
+                
+                for (const [id, doc] of this.documents) {
+                    // 避免重复添加
+                    if (results.some(r => r.id === id)) continue;
+                    
+                    const contentLower = doc.content.toLowerCase();
+                    if (contentLower.includes(queryLower)) {
+                        // 计算匹配程度
+                        const matches = (contentLower.match(new RegExp(queryLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+                        const similarity = Math.min(matches * 0.1, 0.8); // 最高0.8分
+                        
+                        results.push({
+                            id: id,
+                            document: doc.content,
+                            metadata: doc.metadata,
+                            similarity: similarity,
+                            matchType: 'direct'
+                        });
+                    }
+                }
+            }
+            
+            // 3. 如果还是没有结果，尝试部分匹配
+            if (results.length === 0) {
+                const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+                
+                for (const [id, doc] of this.documents) {
+                    const contentLower = doc.content.toLowerCase();
+                    let matchCount = 0;
+                    
+                    for (const word of queryWords) {
+                        if (contentLower.includes(word)) {
+                            matchCount++;
+                        }
+                    }
+                    
+                    if (matchCount > 0) {
+                        const similarity = (matchCount / queryWords.length) * 0.5; // 部分匹配降权
+                        results.push({
+                            id: id,
+                            document: doc.content,
+                            metadata: doc.metadata,
+                            similarity: similarity,
+                            matchType: 'partial'
+                        });
+                    }
                 }
             }
             
@@ -99,12 +155,15 @@ class DocumentStore {
             results.sort((a, b) => b.similarity - a.similarity);
             const limitedResults = results.slice(0, limit);
             
-            console.log(`🔍 搜索到 ${limitedResults.length} 个相关文档`);
+            console.log(`✅ 找到 ${limitedResults.length} 个相关文档`);
+            if (limitedResults.length > 0) {
+                console.log(`📈 匹配类型分布: ${limitedResults.map(r => r.matchType).join(', ')}`);
+            }
             
             return {
                 documents: limitedResults.map(r => r.document),
                 metadatas: limitedResults.map(r => r.metadata),
-                distances: limitedResults.map(r => 1 - r.similarity), // 距离 = 1 - 相似度
+                distances: limitedResults.map(r => 1 - r.similarity),
                 ids: limitedResults.map(r => r.id)
             };
         } catch (error) {
@@ -129,31 +188,50 @@ class DocumentStore {
     }
 
     calculateSimilarity(fp1, fp2) {
-        // 计算两个文本指纹的相似度（简化版余弦相似度）
+        // 改进的相似度计算，包含简单的文本包含检查
         const keys1 = new Set(fp1.keys());
         const keys2 = new Set(fp2.keys());
         const intersection = new Set([...keys1].filter(k => keys2.has(k)));
         
-        if (intersection.size === 0) return 0;
-        
-        let dotProduct = 0;
-        let norm1 = 0;
-        let norm2 = 0;
-        
-        for (const key of intersection) {
-            const val1 = fp1.get(key) || 0;
-            const val2 = fp2.get(key) || 0;
-            dotProduct += val1 * val2;
+        // 如果有交集，计算余弦相似度
+        if (intersection.size > 0) {
+            let dotProduct = 0;
+            let norm1 = 0;
+            let norm2 = 0;
+            
+            for (const key of intersection) {
+                const val1 = fp1.get(key) || 0;
+                const val2 = fp2.get(key) || 0;
+                dotProduct += val1 * val2;
+            }
+            
+            for (const val of fp1.values()) {
+                norm1 += val * val;
+            }
+            for (const val of fp2.values()) {
+                norm2 += val * val;
+            }
+            
+            if (norm1 > 0 && norm2 > 0) {
+                return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+            }
         }
         
-        for (const val of fp1.values()) {
-            norm1 += val * val;
-        }
-        for (const val of fp2.values()) {
-            norm2 += val * val;
+        // 如果余弦相似度为0，尝试简单的包含匹配
+        const query_words = Array.from(keys1);
+        const doc_words = Array.from(keys2);
+        
+        let matches = 0;
+        for (const query_word of query_words) {
+            for (const doc_word of doc_words) {
+                if (doc_word.includes(query_word) || query_word.includes(doc_word)) {
+                    matches++;
+                    break;
+                }
+            }
         }
         
-        return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+        return matches > 0 ? matches / query_words.length * 0.3 : 0; // 降权的包含匹配
     }
 }
 
